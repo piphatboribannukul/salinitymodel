@@ -67,11 +67,12 @@ async function loadData() {
   isLive = false;
 }
 
-// แปลงโครง Firebase {station:{h24,h48,...}} → โครงเดียวกับ demo
+// แปลงโครง Firebase {key:{name,h24,h48,...}} → โครงเดียวกับ demo
 function fromFirebase(obj, updatedTop) {
   const stations = {};
   let updated = updatedTop || "";
-  for (const [name, v] of Object.entries(obj)) {
+  for (const [key, v] of Object.entries(obj)) {
+    const name = v.name || key;  // ใช้ชื่อจริงจาก field name (key ถูก sanitize)
     stations[name] = { cur: v.current ?? null, h24: v.h24 ?? null, h48: v.h48 ?? null,
       hist: v.hist ?? null, fc: v.fc ?? null };
     if (v.updated && v.updated > updated) updated = v.updated;
