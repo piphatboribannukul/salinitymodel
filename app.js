@@ -53,8 +53,10 @@ async function loadData() {
       const r = await fetch(`${CONFIG.FIREBASE_URL}/${CONFIG.FORECAST_PATH}.json`, { cache: "no-store" });
       if (r.ok) {
         const fb = await r.json();
-        if (fb && Object.keys(fb).length) {
-          DATA = fromFirebase(fb);
+        // โครงตาม rules: { ts, updated, data:{station:{...}} }
+        const stationsObj = fb && fb.data ? fb.data : fb;
+        if (stationsObj && Object.keys(stationsObj).length) {
+          DATA = fromFirebase(stationsObj, fb && fb.updated);
           isLive = true;
           return;
         }
@@ -65,14 +67,14 @@ async function loadData() {
   isLive = false;
 }
 
-// แปลงโครง Firebase {station:{updated,h24,h48,...}} → โครงเดียวกับ demo
-function fromFirebase(fb) {
+// แปลงโครง Firebase {station:{h24,h48,...}} → โครงเดียวกับ demo
+function fromFirebase(obj, updatedTop) {
   const stations = {};
-  let updated = "";
-  for (const [name, v] of Object.entries(fb)) {
+  let updated = updatedTop || "";
+  for (const [name, v] of Object.entries(obj)) {
     stations[name] = { cur: v.current ?? null, h24: v.h24 ?? null, h48: v.h48 ?? null,
       hist: v.hist ?? null, fc: v.fc ?? null };
-    if (v.updated > updated) updated = v.updated;
+    if (v.updated && v.updated > updated) updated = v.updated;
   }
   return { updated, stations };
 }
